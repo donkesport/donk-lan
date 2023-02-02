@@ -1,0 +1,157 @@
+{
+    "packer_infos": {
+        "creds" : {
+            "proxmox_api_url": "null",
+            "proxmox_api_token_id": "null",
+            "proxmox_api_token_secret": "null"
+        },
+        "proxmox_node":"null",
+        "template_deploy":[
+            {
+                "vmid": "500",
+                "name": "pfsense",
+                "memory" : "4096",
+                "disk_size" : "20G",
+                "cores" : "2",                
+                "bridge" : "vmbr0"
+            },
+            {
+                "vmid": "600",
+                "name": "ubuntu-server-jammy-base",
+                "memory" : "4096",
+                "disk_size" : "20G",
+                "cores" : "2",
+                "bridge" : "vmbr10"
+            }
+        ]
+        
+
+    },
+    "terraform_infos": {
+        "creds":{
+            "proxmox_api_url": "null",
+            "proxmox_api_token_id": "null",
+            "proxmox_api_token_secret": "null"
+        },
+        "dns_server": "10.50.13.10",
+        "user": "donkesport",
+        "proxmox_node": "null",
+        "vm_deploy": [
+            {
+                "order": 0,
+                "name": "pfsense",
+                "type" : "firewall",
+                "ip_address": [
+                    "10.50.10.254",
+                    "10.50.11.254",
+                    "10.50.12.254",
+                    "10.50.13.254",
+                    "10.50.14.254",
+                    "10.50.31.254",
+                    "10.50.32.254"
+                ],
+                "gateway": "10.50.10.1",
+                "bridge": [
+                    "vmbr10",
+                    "vmbr11",
+                    "vmbr12",
+                    "vmbr13",
+                    "vmbr14",
+                    "vmbr31",
+                    "vmbr32"
+                ],
+                "ram": 16384,
+                "core": 2
+            },
+            {
+                "order": 1,
+                "type" : "registry",
+                "name": "registry",
+                "ip_address": "10.50.13.10",
+                "gateway": "10.50.13.254",
+                "bridge": "vmbr13",
+                "ram": 8192,
+                "core": 2
+            },
+            {
+                "order": 2,
+                "name": "monitoring",
+                "type" : "monitoring",
+                "ip_address": "10.50.11.100",
+                "gateway": "10.50.11.254",
+                "bridge": "vmbr11",
+                "ram": 8192,
+                "core": 2
+            },
+            {
+                "order": 3,
+                "name": "consul-server-1",
+                "type": "ubuntu-consul-server", 
+                "ip_address": "10.50.12.1",
+                "gateway": "10.50.12.254",
+                "bridge": "vmbr12",
+                "ram": 4096,
+                "core": 4
+            },
+            {
+                "order": 4,
+                "type" : "ubuntu-nomad-server",
+                "name": "nomad-server-1",
+                "ip_address": "10.50.12.11",
+                "gateway": "10.50.12.254",
+                "bridge": "vmbr12",
+                "ram": 8192,
+                "core": 4
+            },
+            {
+                "order": 5,
+                "type" : "ubuntu-nomad-server",
+                "name": "nomad-monitor-node1",
+                "ip_address": "10.50.11.1",
+                "gateway": "10.50.11.254",
+                "bridge": "vmbr11",
+                "ram": 4096,
+                "core": 4
+            },
+            {
+                "order": 6,
+                "type" : "ubuntu-nomad-server",
+                "name": "nomad-infra-node1",
+                "ip_address": "10.50.13.1",
+                "gateway": "10.50.13.254",
+                "bridge": "vmbr13",
+                "ram": 8192,
+                "core": 4
+            },
+            {
+                "order": 7,
+                "type" : "ubuntu-nomad-server",
+                "name": "nomad-games-node1",
+                "ip_address": "10.50.14.1",
+                "gateway": "10.50.14.254",
+                "bridge": "vmbr14",
+                "ram": 32768,
+                "core": 12
+            }
+        ]
+    },
+    "ansible_infos": {
+        "games_supported":[
+            {
+                "name" : "csgo"
+            },
+            {
+                "name" : "minecraft-survival"
+            },
+            {
+                "name" : "minecraft-buildbattle"
+            },
+            {
+                "name" : "teeworlds"
+            }
+            
+        ],
+        "games_selected":[]
+    }
+    
+}

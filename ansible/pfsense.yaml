@@ -1,0 +1,18 @@
+---
+- hosts: pfsense_cores
+  gather_facts: true
+  become: yes
+  become_user: root
+  roles:
+    - pfsense
+  vars:
+    fw_monitoring_address : "10.50.11.254"
+    fw_automatisation_address: "10.50.12.254"
+    fw_infra_address: "10.50.13.254"
+    fw_games_address: "10.50.14.254"
+    fw_admin_address: "10.50.31.254"
+    fw_joueurs_address: "10.50.32.254"
+    hostname: pfsense
+    domain: donk-lan
+    # operator_account: donkadm
+    # operator_password: $2b$12$8f99BOY1QvFPJbf2vqAXAeU5QI8re7Y.3fzwBstw2iqWNfcdplKj6 #bcrypt hash

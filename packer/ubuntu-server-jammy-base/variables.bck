@@ -1,0 +1,7 @@
+admin_ip="192.168.2.80" # ip of computer that execute packer
+disk_size = "20G"
+cores = "1"
+memory = "2048"
+bridge = "vmbr0"
+node = "pve-2" # pve for donk server pve-2 for ensibs server
+vmid = "206"

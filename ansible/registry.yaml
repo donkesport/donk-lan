@@ -1,0 +1,175 @@
+---
+# written by wildpasta
+
+# Install docker on registry host
+- hosts: registry
+  become: yes
+  roles:
+    - docker
+  tags:
+    - configure_host
+
+
+# Add registry address to the nomad clients
+- name: Push registry daemon
+  hosts: nomad_instance
+  become: yes
+  tasks:
+    - name: Remove file (delete file)
+      ansible.builtin.file:
+        path: /etc/docker/daemon.json
+        state: absent
+    - name: Inserting line into daemon file
+      ansible.builtin.lineinfile:
+        path: /etc/docker/daemon.json
+        line: '{ "insecure-registries":["registry.donk.lan:5000"] }'
+        create: yes
+    - name: Restart service docker, in all cases
+      ansible.builtin.service:
+        name: docker
+        state: restarted
+  tags:
+    - configure_nomad 
+
+# Pull docker images and push them into the registry
+- name: "deploy dockers"
+  hosts: registry
+  become: yes
+  tasks:
+    - name: "install pip : not needed if packer is redone"
+      ansible.builtin.package:
+        name: python3-pip
+        state: present
+    - name: "install docker for python"
+      ansible.builtin.pip: 
+        name: docker
+    - name: "pull docker image : registry server"
+      community.docker.docker_image:
+        name: "registry"
+        source: pull
+    - name: "start container : registry server"
+      community.docker.docker_container:
+        name: registry
+        image: "registry"
+        ports:
+          - "5000:5000"
+        restart: true
+        detach: true
+    - name: "pull docker image : teeworlds"
+      community.docker.docker_image:
+        name: "riftbit/teeworlds"
+        source: pull
+    - name: "tagging docker image : teeworlds"
+      community.docker.docker_image:
+        name: "riftbit/teeworlds"
+        repository: "localhost:5000/teeworlds:latest"
+        force_tag: true
+        source: local        
+    - name: "push docker image to registry : teeworlds"
+      community.docker.docker_image:
+        name: "localhost:5000/teeworlds:latest"
+        repository: "localhost:5000/teeworlds:latest"
+        push: true
+        source: local
+    - name: "Remove image : teeworlds"
+      community.docker.docker_image:
+        state: absent
+        name: "riftbit/teeworlds"
+    - name: "pull docker image : csgo"
+      community.docker.docker_image:
+        name: "cm2network/csgo"
+        source: pull
+    - name: "tagging docker image : csgo"
+      community.docker.docker_image:
+        name: "cm2network/csgo"
+        repository: "localhost:5000/csgo:latest"
+        force_tag: true
+        source: local        
+    - name: "push docker image to registry : csgo"
+      community.docker.docker_image:
+        name: "localhost:5000/csgo:latest"
+        repository: "localhost:5000/csgo:latest"
+        push: true
+        source: local
+    - name: "Remove image : csgo"
+      community.docker.docker_image:
+        state: absent
+        name: "cm2network/csgo"
+    - name: "pull docker image : minecraft-server"
+      community.docker.docker_image:
+        name: "itzg/minecraft-server"
+        source: pull
+    - name: "tagging docker image : minecraft-server"
+      community.docker.docker_image:
+        name: "itzg/minecraft-server"
+        repository: "localhost:5000/minecraft-server:latest"
+        force_tag: true
+        source: local        
+    - name: "push docker image to registry : minecraft-server"
+      community.docker.docker_image:
+        name: "localhost:5000/minecraft-server:latest"
+        repository: "localhost:5000/minecraft-server:latest"
+        push: true
+        source: local
+    - name: "Remove image : minecraft-server"
+      community.docker.docker_image:
+        state: absent
+        name: "itzg/minecraft-server"
+    - name: "pull docker image : traefik"
+      community.docker.docker_image:
+        name: "traefik:latest"
+        source: pull
+    - name: "tagging docker image : traefik"
+      community.docker.docker_image:
+        name: "traefik:latest"
+        repository: "localhost:5000/traefik:latest"
+        force_tag: true
+        source: local        
+    - name: "push docker image to registry : traefik"
+      community.docker.docker_image:
+        name: "localhost:5000/traefik:latest"
+        repository: "localhost:5000/traefik:latest"
+        push: true
+        source: local
+    - name: "Remove image : traefik"
+      community.docker.docker_image:
+        state: absent
+        name: "traefik:latest"
+    - name: "pull docker image : httpd"
+      community.docker.docker_image:
+        name: "httpd:latest"
+        source: pull
+    - name: "tagging docker image : httpd"
+      community.docker.docker_image:
+        name: "httpd:latest"
+        repository: "localhost:5000/httpd:latest"
+        force_tag: true
+        source: local        
+    - name: "push docker image to registry : httpd"
+      community.docker.docker_image:
+        name: "localhost:5000/httpd:latest"
+        repository: "localhost:5000/httpd:latest"
+        push: true
+        source: local
+    - name: "pull docker image : freeradius-server"
+      community.docker.docker_image:
+        name: "freeradius/freeradius-server"
+        source: pull
+    - name: "tagging docker image : minecraft-server"
+      community.docker.docker_image:
+        name: "freeradius/freeradius-server:latest"
+        repository: "localhost:5000/freeradius-server:latest"
+        force_tag: true
+        source: local        
+    - name: "push docker image to registry : freeradius-server"
+      community.docker.docker_image:
+        name: "localhost:5000/freeradius-server:latest"
+        repository: "localhost:5000/freeradius-server:latest"
+        push: true
+        source: local
+    - name: "Remove image : freeradius-server"
+      community.docker.docker_image:
+        state: absent
+        name: "freeradius/freeradius-server"
+  tags:
+    - pull_docker_images

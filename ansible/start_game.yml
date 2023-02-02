@@ -1,0 +1,51 @@
+# Copy games config files
+- name: Handle Job
+  hosts: nomad_games_node1
+  tasks:
+   - name: Send files to nomad games node
+     ansible.builtin.copy:
+       src: "{{ source_folder }}"
+       dest: /home/donkesport
+       owner: donkesport
+       group: donkesport
+       mode: '0644'
+     tags:
+      - copy_files_nomad
+
+# Start a nomad job from a .nomad file located in the templates folder
+   - name: Starting a job
+     community.general.nomad_job:
+        host: localhost
+        state: present
+        content: "{{ lookup('ansible.builtin.file', '../templates/{{ game_name }}.nomad') }}"
+        timeout: 120
+        use_ssl: no
+        validate_certs: no
+     tags:
+      - start_job_nomad
+
+# Stop a nomad job that has already started
+   - name: Stop job
+     community.general.nomad_job:
+       host: localhost
+       state: absent
+       name: "{{ job_name }}"
+       timeout: 120
+       use_ssl: no
+       validate_certs: no
+     tags:
+      - stop_job_nomad
+
+# Force a nomad job to start
+   - name: Force job to start
+     community.general.nomad_job:
+       host: localhost
+       state: present
+       name: "{{ job_name }}"
+       timeout: 120
+       force_start: true
+       timeout: 120
+       use_ssl: no
+       validate_certs: no
+     tags:
+      - force_start_job_nomad

@@ -1,0 +1,30 @@
+---
+# Written by NicoFgrx
+- name: copy files
+  hosts: nomad_infra_node1
+  tasks:
+    - name: send files to nomad node
+      ansible.builtin.copy:
+        src: "{{ source_folder }}"
+        dest: /home/donkesport/
+        owner: donkesport
+        group: donkesport
+        mode: '0644'
+      tags:
+      - copy-files
+
+- name: Start freeradius
+  hosts: nomad_servers
+  tasks:
+    - name: start freeradius job
+      community.general.nomad_job:
+        host: "{{ nomad_server_ip }}"
+        state: present
+        content: "{{ lookup('ansible.builtin.file', '../templates/radius.nomad') }}"
+        timeout: 120
+        force_start: true
+        use_ssl: no
+        validate_certs: no
+      tags:
+      - start-jobs
+

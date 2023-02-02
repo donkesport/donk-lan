@@ -1,0 +1,704 @@
+kind: pipeline
+type: docker
+name: test-nomad
+  
+# Needs two parameters:
+# nomad_server_ip : ip of nomad server the job is being deployed to
+# job_tested : name of job tested
+
+steps:
+- name: deploy-job
+  image: loq9/drone-nomad
+  settings:
+    addr: http://${nomad_server_ip}:4646
+    template: templates/${job_tested}.nomad
+  environment:
+    PLUGIN_DRY_RUN: false
+    PLUGIN_WATCH_DEPLOYMENT: true
+- name: scp-files # copy testing script
+  image: appleboy/drone-scp
+  settings:
+    host:
+      - ${nomad_server_ip}
+    username: donkesport
+    key:
+      from_secret: ssh_key
+    port: 22
+    target: /home/donkesport/
+    source: 
+      - ci/test_nomad_job.sh
+      - ci/get_nomad_logs.sh
+- name: test-deployment # launch testing script
+  image: appleboy/drone-ssh:1.6.4
+  settings:
+    host:
+      - ${nomad_server_ip}
+    username: donkesport
+    key:
+      from_secret: ssh_key
+    port: 22
+    command_timeout: 2m
+    script:
+      - /bin/bash /home/donkesport/ci/test_nomad_job.sh ${job_tested}
+  depends_on:
+    - scp-files
+    - deploy-job
+- name: get-logs # retrieve logs
+  image: appleboy/drone-ssh:1.6.4
+  settings:
+    host:
+      - ${nomad_server_ip}
+    username: donkesport
+    key:
+      from_secret: ssh_key
+    port: 22
+    command_timeout: 2m
+    script:
+      - /bin/bash /home/donkesport/ci/get_nomad_logs.sh ${job_tested}
+  depends_on:
+    - scp-files
+    - deploy-job
+  when:
+    status:
+      - failure
+      - success
+- name: remove-test-script # clean server
+  image: appleboy/drone-ssh:1.6.4
+  settings:
+    host:
+      - ${nomad_server_ip}
+    username: donkesport
+    key:
+      from_secret: ssh_key
+    port: 22
+    command_timeout: 2m
+    script:
+      - rm /home/donkesport/ci/test_nomad_job.sh
+      - rm /home/donkesport/ci/get_nomad_logs.sh
+      - rmdir /home/donkesport/ci
+  when:
+    status:
+      - failure
+      - success
+  depends_on:
+    - test-deployment
+    - get-logs
+- name: purge-nomad-job
+  image: appleboy/drone-ssh:1.6.4
+  settings:
+    host:
+      - ${nomad_server_ip}
+    username: donkesport
+    key:
+      from_secret: ssh_key
+    port: 22
+    command_timeout: 3m
+    script:
+      - nomad job stop -purge ${job_tested}
+  when:
+    status:
+      - failure
+      - success
+  depends_on:
+    - test-deployment
+    - get-logs
+- name: notify-discord-nomad
+  image: appleboy/drone-discord
+  settings:
+    webhook_id: 
+      from_secret: discord_webhook_id
+    webhook_token: 
+      from_secret: discord_webhook_token
+    username: "btw im the CI"
+    message: >
+      📝 {{repo.name}} / `{{commit.branch}}` - {{commit.message}}
+      {{#success build.status}}
+        ✅ succeeded  for 👷‍♂️ build {{build.number}}
+      {{else}}
+        🛑 failed for 👷‍♂️ build {{build.number}} 
+      {{/success}}
+  when:
+    status:
+      - failure
+      - success
+  depends_on:
+    - test-deployment
+    - purge-nomad-job
+
+trigger:
+  branch:
+  - nomad/*
+---
+kind: pipeline
+type: docker
+name: test-packer
+
+steps:
+- name: scp-files-packer # copy testing script
+  image: appleboy/drone-scp
+  settings:
+    host:
+      - 10.50.13.200
+    username: donkesport
+    password:
+      from_secret: ssh_password_ensibs
+    port: 22
+    target: /home/donkesport/test/
+    source: 
+      - packer/*
+- name: run-packer
+  image: appleboy/drone-ssh
+  settings:
+    host:
+      - 10.50.13.200
+    username: donkesport
+    password:
+      from_secret: ssh_password_ensibs
+    port: 22
+    command_timeout: 20m
+    script:
+      - cd /home/donkesport/test/packer ; packer build -var-file="../credentials-ensibs.pkr.hcl" pfsense
+  depends_on:
+    - scp-files-packer
+- name: clean-vm-packer
+  image: appleboy/drone-ssh
+  settings:
+    host:
+      - 10.50.13.200
+    username: donkesport
+    password:
+      from_secret: ssh_password_ensibs
+    port: 22
+    command_timeout: 20m
+    script:
+      - rm -rf /home/donkesport/test/packer/
+  depends_on:
+    - run-packer
+  when:
+    status:
+    - failure
+    - success
+- name: notify-discord-packer
+  image: appleboy/drone-discord
+  settings:
+    webhook_id: 
+      from_secret: discord_webhook_id
+    webhook_token: 
+      from_secret: discord_webhook_token
+    username: "btw im the CI"
+    message: >
+      📝 {{repo.name}} / `{{commit.branch}}` - {{commit.message}}
+      {{#success build.status}}
+        ✅ succeeded  for 👷‍♂️ build {{build.number}}
+      {{else}}
+        🛑 failed for 👷‍♂️ build {{build.number}} 
+      {{/success}}
+  when:
+    status:
+      - failure
+      - success
+  depends_on:
+    - clean-vm-packer
+
+trigger:
+  branch:
+  - packer/*
+---
+kind: pipeline
+type: docker
+name: test-traefik
+  
+# Needs 1 parameter:
+# nomad_server_ip : ip of nomad server the job is being deployed to
+
+steps:
+- name: deploy-job # deploys traefik
+  image: loq9/drone-nomad
+  settings:
+    addr: http://${nomad_server_ip}:4646
+    template: templates/traefik.nomad
+  environment:
+    PLUGIN_DRY_RUN: false
+    PLUGIN_WATCH_DEPLOYMENT: true
+- name: deploy-job-minecraft
+  image: loq9/drone-nomad
+  settings:
+    addr: http://${nomad_server_ip}:4646
+    template: templates/minecraft-buildbattle.nomad
+  environment:
+    PLUGIN_DRY_RUN: false
+    PLUGIN_WATCH_DEPLOYMENT: true
+- name: scp-files # copy nomad job
+  image: appleboy/drone-scp
+  settings:
+    host:
+      - ${nomad_server_ip}
+    username: donkesport
+    key:
+      from_secret: ssh_key
+    port: 22
+    target: /home/donkesport/
+    source: 
+      - ci/test_nomad_job.sh
+      - ci/get_nomad_logs.sh
+- name: test-deployment # launch testing script
+  image: appleboy/drone-ssh
+  settings:
+    host:
+      - ${nomad_server_ip}
+    username: donkesport
+    key:
+      from_secret: ssh_key
+    port: 22
+    command_timeout: 2m
+    script:
+      - /bin/bash /home/donkesport/ci/test_nomad_job.sh traefik
+  depends_on:
+    - scp-files
+    - deploy-job-minecraft
+- name: get-logs # retrieve logs
+  image: appleboy/drone-ssh
+  settings:
+    host:
+      - ${nomad_server_ip}
+    username: donkesport
+    key:
+      from_secret: ssh_key
+    port: 22
+    command_timeout: 2m
+    script:
+      - /bin/bash /home/donkesport/ci/get_nomad_logs.sh traefik
+  depends_on:
+    - scp-files
+    - test-deployment
+  when:
+    status:
+      - failure
+      - success
+- name: remove-test-script # clean server
+  image: appleboy/drone-ssh
+  settings:
+    host:
+      - ${nomad_server_ip}
+    username: donkesport
+    key:
+      from_secret: ssh_key
+    port: 22
+    command_timeout: 2m
+    script:
+      - rm /home/donkesport/ci/test_nomad_job.sh
+      - rm /home/donkesport/ci/get_nomad_logs.sh
+      - rmdir /home/donkesport/ci
+  when:
+    status:
+      - failure
+      - success
+  depends_on:
+    - test-deployment
+    - get-logs
+- name: notify-discord-nomad
+  image: appleboy/drone-discord
+  settings:
+    webhook_id: 
+      from_secret: discord_webhook_id
+    webhook_token: 
+      from_secret: discord_webhook_token
+    username: "btw im the CI"
+    message: >
+      📝 {{repo.name}} / `{{commit.branch}}` - {{commit.message}}
+      {{#success build.status}}
+        ✅ succeeded  for 👷‍♂️ build {{build.number}}
+      {{else}}
+        🛑 failed for 👷‍♂️ build {{build.number}} 
+      {{/success}}
+  when:
+    status:
+      - failure
+      - success
+  depends_on:
+    - remove-test-script
+
+trigger:
+  branch:
+  - traefik/*
+---
+kind: pipeline
+type: docker
+name: test-ansible
+
+# Tests an ansible playbook
+# Launch with trigger_ci.sh : specify name of playbook
+# WARNING : comment ansible_ssh_private_key_file in inventory
+steps:
+- name: run-ansible #check ansible syntax and run playbook
+  image: pandatix/docker-ansible:2.16
+  settings:
+    playbook: ansible/${playbook}.yaml
+    inventory: ansible/inventory.yaml
+    connection: ssh
+    #syntax_check: true
+    verbose: 3
+    user: donkesport
+    private_key:
+      from_secret: ssh_key3
+    extra_vars: '${extra_vars},nomad_server_ip=${nomad_server_ip}' # eventually extra variables
+    galaxy: ansible/requirements.yaml
+    ssh_common_args: "-o StrictHostKeyChecking=no"
+  environment:
+    ANSIBLE_HOST_KEY_CHECKING: False
+- name: notify-discord-nomad
+  image: appleboy/drone-discord
+  settings:
+    webhook_id: 
+      from_secret: discord_webhook_id
+    webhook_token: 
+      from_secret: discord_webhook_token
+    username: "btw im the CI"
+    message: >
+      📝 {{repo.name}} / `{{commit.branch}}` - {{commit.message}}
+      {{#success build.status}}
+        ✅ succeeded  for 👷‍♂️ build {{build.number}}
+      {{else}}
+        🛑 failed for 👷‍♂️ build {{build.number}} 
+      {{/success}}
+  when:
+    status:
+      - failure
+      - success
+  depends_on:
+    - run-ansible
+
+trigger:
+  branch:
+  - ansible/*
+
+---
+kind: pipeline
+type: docker
+name: deploy-all
+  
+# Needs 1 parameter:
+# nomad_server_ip : ip of nomad server the job is being deployed to
+
+steps:
+- name: deploy-job # deploys traefik
+  image: loq9/drone-nomad
+  settings:
+    addr: http://${nomad_server_ip}:4646
+    template: templates/traefik.nomad
+  environment:
+    PLUGIN_DRY_RUN: false
+    PLUGIN_WATCH_DEPLOYMENT: true
+- name: deploy-job-csgo
+  image: loq9/drone-nomad
+  settings:
+    addr: http://${nomad_server_ip}:4646
+    template: templates/csgo.nomad
+  environment:
+    PLUGIN_DRY_RUN: false
+    PLUGIN_WATCH_DEPLOYMENT: true
+- name: deploy-job-teeworlds
+  image: loq9/drone-nomad
+  settings:
+    addr: http://${nomad_server_ip}:4646
+    template: templates/teeworlds.nomad
+  environment:
+    PLUGIN_DRY_RUN: false
+    PLUGIN_WATCH_DEPLOYMENT: true
+- name: deploy-job-lancache
+  image: loq9/drone-nomad
+  settings:
+    addr: http://${nomad_server_ip}:4646
+    template: templates/lancache.nomad
+  environment:
+    PLUGIN_DRY_RUN: false
+    PLUGIN_WATCH_DEPLOYMENT: true
+  depends_on:
+  - deploy-job-csgo
+- name: deploy-job-minecraft-buildbattle
+  image: loq9/drone-nomad
+  settings:
+    addr: http://${nomad_server_ip}:4646
+    template: templates/minecraft-buildbattle.nomad
+  environment:
+    PLUGIN_DRY_RUN: false
+    PLUGIN_WATCH_DEPLOYMENT: true
+  #depends_on:
+  #- deploy-job-csgo
+- name: run-ansible-webserver # run webserver playbook
+  image: pandatix/docker-ansible:2.14
+  settings:
+    playbook: ansible/webserver.yaml
+    inventory: ansible/inventory.yaml
+    connection: ssh
+    #syntax_check: true
+    verbose: 1
+    user: donkesport
+    private_key:
+      from_secret: ssh_key3
+    extra_vars: 'source_folder=../res/website,nomad_server_ip=${nomad_server_ip}' # eventually extra variables
+    galaxy: ansible/requirements.yaml
+    ssh_common_args: "-o StrictHostKeyChecking=no"
+  environment:
+    ANSIBLE_HOST_KEY_CHECKING: False
+- name: scp-files # copy nomad job
+  image: appleboy/drone-scp
+  settings:
+    host:
+      - ${nomad_server_ip}
+    username: donkesport
+    key:
+      from_secret: ssh_key
+    port: 22
+    target: /home/donkesport/
+    source: 
+      - ci/test_nomad_job.sh
+      - ci/get_nomad_logs.sh
+- name: test-deployment # launch testing script
+  image: appleboy/drone-ssh
+  settings:
+    host:
+      - ${nomad_server_ip}
+    username: donkesport
+    key:
+      from_secret: ssh_key
+    port: 22
+    command_timeout: 2m
+    script:
+      - /bin/bash /home/donkesport/ci/test_nomad_job.sh traefik
+  depends_on:
+    - scp-files
+    - deploy-job-csgo
+    - deploy-job-teeworlds
+    - run-ansible-webserver
+- name: get-logs # retrieve logs
+  image: appleboy/drone-ssh
+  settings:
+    host:
+      - ${nomad_server_ip}
+    username: donkesport
+    key:
+      from_secret: ssh_key
+    port: 22
+    command_timeout: 2m
+    script:
+      - /bin/bash /home/donkesport/ci/get_nomad_logs.sh traefik
+  depends_on:
+    - scp-files
+    - test-deployment
+  when:
+    status:
+      - failure
+      - success
+- name: remove-test-script # clean server
+  image: appleboy/drone-ssh
+  settings:
+    host:
+      - ${nomad_server_ip}
+    username: donkesport
+    key:
+      from_secret: ssh_key
+    port: 22
+    command_timeout: 2m
+    script:
+      - rm /home/donkesport/ci/test_nomad_job.sh
+      - rm /home/donkesport/ci/get_nomad_logs.sh
+      - rmdir /home/donkesport/ci
+  when:
+    status:
+      - failure
+      - success
+  depends_on:
+    - test-deployment
+    - get-logs
+- name: notify-discord-nomad
+  image: appleboy/drone-discord
+  settings:
+    webhook_id: 
+      from_secret: discord_webhook_id
+    webhook_token: 
+      from_secret: discord_webhook_token
+    username: "btw im the CI"
+    message: >
+      📝 {{repo.name}} / `{{commit.branch}}` - {{commit.message}}
+      {{#success build.status}}
+        ✅ succeeded  for 👷‍♂️ build {{build.number}}
+      {{else}}
+        🛑 failed for 👷‍♂️ build {{build.number}} 
+      {{/success}}
+  when:
+    status:
+      - failure
+      - success
+  depends_on:
+    - remove-test-script
+
+trigger:
+  branch:
+  - test/*
+
+---
+kind: pipeline
+type: ssh # needs to be ssh for terraform 
+name: test-terraform
+
+server:
+  host: 10.50.13.200
+  user: donkesport
+  password:
+    from_secret: ssh_password_ensibs
+
+# credentials-ensibs.tfvars needs to be on the target admin VM
+steps:
+- name: terraform-plan
+  commands:
+    - ls -la
+    - cd terraform/${job_tested}
+    - terraform init
+    - terraform plan -var-file='/home/donkesport/donk-lan/terraform/credentials-ensibs.tfvars'
+    - terraform apply -auto-approve -var-file='/home/donkesport/donk-lan/terraform/credentials-ensibs.tfvars'
+trigger:
+  branch:
+  - terraform/*
+
+---
+kind: pipeline
+type: docker # needs to be ssh for terraform 
+name: test-cli
+
+steps:
+- name: scp-files-cli # copy testing script
+  image: appleboy/drone-scp:1.6.4
+  settings:
+    host:
+      - 10.50.13.200
+    username: donkesport
+    password:
+      from_secret: ssh_password_ensibs
+    port: 22
+    target: /home/donkesport/test/donk-lan
+    source: 
+      - ansible/* 
+      - cli/*
+      - packer/*
+      - res/*
+      - templates/*
+      - terraform/*
+
+- name: cli-build-connection
+  image: appleboy/drone-ssh:1.6.4
+  settings:
+    host:
+      - 10.50.13.200
+    username: donkesport
+    password:
+      from_secret: ssh_password_ensibs
+    port: 22
+    command_timeout: 2m
+    script:
+      - cd /home/donkesport/test/donk-lan/cli
+      - python -m pip install -r requirements.txt
+      - python main.py proxmox 'https://pve.donk.lan:8006/api/json' 'pve-2'
+      - python main.py packer 'packer@pve!packer-demo' 'abcdef123456789'
+      - python main.py terraform 'terraform@pve!terraform-demo' 'abcdef123546789'
+      - cat config.json
+  depends_on:
+    -  scp-files-cli
+
+
+- name: cli-build-files
+  image: appleboy/drone-ssh:1.6.4
+  settings:
+    host:
+      - 10.50.13.200
+    username: donkesport
+    password:
+      from_secret: ssh_password_ensibs
+    port: 22
+    command_timeout: 2m
+    script:
+      - cd /home/donkesport/test/donk-lan/cli
+      - python main.py build
+      - ls -l generated_files/
+  depends_on:
+    - cli-build-connection
+
+- name: cli-apply-config
+  image: appleboy/drone-ssh:1.6.4
+  settings:
+    host:
+      - 10.50.13.200
+    username: donkesport
+    password:
+      from_secret: ssh_password_ensibs
+    port: 22
+    command_timeout: 2m
+    script:
+      - cd /home/donkesport/test/donk-lan/cli
+      - python main.py apply
+  depends_on:
+    - cli-build-files
+
+- name: cli-run
+  image: appleboy/drone-ssh:1.6.4
+  settings:
+    host:
+      - 10.50.13.200
+    username: donkesport
+    password:
+      from_secret: ssh_password_ensibs
+    port: 22
+    command_timeout: 90m
+    script:
+      - cd /home/donkesport/test/donk-lan/cli
+      - python main.py run
+      
+  depends_on:
+    - cli-apply-config
+
+- name: cli-clean # clean server
+  image: appleboy/drone-ssh:1.6.4
+  settings:
+    host:
+      - 10.50.13.200
+    username: donkesport
+    password:
+      from_secret: ssh_password_ensibs
+    port: 22
+    command_timeout: 2m
+    script:
+      - rm -rf /home/donkesport/test/donk-lan
+  when:
+    status:
+      - failure
+      - success
+  depends_on:
+   - cli-run
+
+- name: notify-discord-cli
+  image: appleboy/drone-discord
+  settings:
+    webhook_id: 
+      from_secret: discord_webhook_id
+    webhook_token: 
+      from_secret: discord_webhook_token
+    username: "btw im the CI"
+    message: >
+      📝 {{repo.name}} / `{{commit.branch}}` - {{commit.message}}
+      {{#success build.status}}
+        ✅ succeeded  for 👷‍♂️ build {{build.number}}
+      {{else}}
+        🛑 failed for 👷‍♂️ build {{build.number}} 
+      {{/success}}
+  when:
+    status:
+      - failure
+      - success
+  depends_on:
+    - cli-run
+    - cli-clean
+
+trigger:
+  branch:
+  - dev/cli
+

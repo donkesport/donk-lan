@@ -1,0 +1,40 @@
+---
+# Written by karakara104
+- name: copy files
+  hosts: nomad_infra_node1
+  tasks:
+    - name: send files to nomad node
+      ansible.builtin.copy:
+        src: "{{ source_folder }}"
+        dest: /home/donkesport/data
+        owner: donkesport
+        group: donkesport
+        mode: '0644'
+      tags:
+      - copy-files
+
+- name: Start webserver
+  hosts: nomad_servers
+  tasks:
+    - name: start webserver job
+      community.general.nomad_job:
+        host: "{{ nomad_server_ip }}"
+        state: present
+        content: "{{ lookup('ansible.builtin.file', '../templates/webserver.nomad') }}"
+        timeout: 120
+        use_ssl: no
+        validate_certs: no
+      tags:
+      - start-jobs
+    - name: start traefik
+      community.general.nomad_job:
+        host: "{{ nomad_server_ip }}"
+        state: present
+        content: "{{ lookup('ansible.builtin.file', '../templates/traefik.nomad') }}"
+        timeout: 120
+        use_ssl: no
+        validate_certs: no
+      tags:
+      - start-jobs
+      
+

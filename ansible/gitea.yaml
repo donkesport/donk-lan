@@ -1,0 +1,66 @@
+---
+# Written by karakara104
+- name: "Import variables"
+  hosts: gitea
+  tasks:
+    - include_vars: secrets.yml
+    - debug: msg="Hello, {{ gitea_user_username }}!"
+  tags:
+    - always
+
+- name: "Install gitea"
+  hosts: gitea
+  roles:
+    - {role: gitea, tags: gitea}
+  vars:
+    gitea_fqdn: 'git.donk.lan'
+    gitea_root_url: "http://{{ gitea_fqdn }}:3000" 
+    gitea_protocol: http
+    gitea_ssh_listen: '0.0.0.0' # will need to provide IP for admin VM
+    gitea_start_ssh: true
+  tags: 
+    - install
+    - configure
+
+# create autosigned cert : gitea cert --host git.donk.lan
+# move key and cert to home : {{ gitea_custom }}
+
+- name: "create gitea user"
+  hosts: gitea
+  tasks:
+   - name: "Create user"
+     shell: "gitea admin user create --username {{ gitea_user_username }} --password {{ gitea_user_password }} --email donkesport@donk.lan -c {{ gitea_configuration_path }}/gitea.ini"
+     become: yes # allow privilege escalation
+     become_user: gitea
+     vars:
+       ansible_shell_allow_world_readable_temp: true
+       gitea_configuration_path: "/etc/gitea"
+  tags:
+   - postinstall
+   - createuser
+
+- name: "clone repo"
+  hosts: gitea
+  tasks:
+   - name: "use gitea API"
+     ansible.builtin.uri:
+       url: http://git.donk.lan:3000/api/v1/repos/migrate
+       method: POST
+       user: "{{ gitea_user_username }}"
+       password: "{{ gitea_user_password }}"
+       force_basic_auth: yes
+       body_format: json
+       body:
+         auth_password: "{{ gitea_user_password }}"
+         auth_token: "{{ github_token }}"
+         auth_username: "{{ gitea_user_username }}"
+         clone_addr: "https://github.com/donkesport/donk-lan"
+         repo_name: "donk-lan"
+         repo_owner: "{{ gitea_user_username }}"
+         mirror: true
+         private: false
+       status_code: 201
+  tags:
+   - postinstall
+   - clonerepo
+...

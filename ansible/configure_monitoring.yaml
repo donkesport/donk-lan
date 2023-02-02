@@ -1,0 +1,66 @@
+---
+# Written by karakara104
+- name: add data sources to grafana
+  hosts: monitoring
+  tasks:
+    - name: wait until loki is ready
+      uri:
+        url: http://127.0.0.1:3100/ready
+        return_content: true
+      register: result
+      until: 'result.content == "ready\n"'
+      retries: 5
+      delay: 5
+    - name: add loki
+      community.grafana.grafana_datasource:
+        name: loki
+        ds_type: loki
+        ds_url: "http://127.0.0.1:3100"
+        tls_skip_verify: yes
+        grafana_url: "http://127.0.0.1:3000"
+        grafana_user: "admin"
+        grafana_password: "admin"
+    - name: add prometheus
+      community.grafana.grafana_datasource:
+        name: prometheus
+        ds_type: prometheus
+        ds_url: "http://127.0.0.1:9090"
+        grafana_url: "http://127.0.0.1:3000"
+        tls_skip_verify: true
+        grafana_user: "admin"
+        grafana_password: "admin"
+  tags:
+    - add-datasources
+
+- name: add dashboards
+  hosts: monitoring
+  vars:
+    dashboards_path_source: "../res/grafana_dashboards" 
+    dashboard_path_target: "/home/donkesport/dashboards"
+  tasks:
+    - name: send files to vm
+      ansible.builtin.copy:
+        src: "{{ dashboards_path_source }}"
+        dest: /home/donkesport/dashboards
+        owner: donkesport
+        group: donkesport
+        mode: '0644'
+    - name: Find dashboard files
+      ansible.builtin.find:
+        paths: "{{ dashboard_path_target }}"
+        file_type: file
+        recurse: Yes
+        patterns: "*.json"
+      register: files_matched
+    - name: Create list of dashboard file names
+      set_fact:
+        dashboard_file_names: "{{ dashboard_file_names | default ([]) + [item.path] }}"
+      loop: "{{ files_matched.files }}"
+    - name: Create/Update a dashboard
+      community.grafana.grafana_dashboard:
+        grafana_url: "http://127.0.0.1:3000"
+        path: "{{ item }}" #"{{ lookup('ansible.builtin.file','{{ item }}' ) }}"
+        state: present
+        grafana_user: "admin"
+        grafana_password: "admin"
+      loop: "{{ dashboard_file_names }}"

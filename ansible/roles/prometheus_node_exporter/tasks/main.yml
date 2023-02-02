@@ -1,0 +1,68 @@
+---
+- name: extract tarball
+  ansible.builtin.unarchive:
+    src: "https://github.com/prometheus/node_exporter/releases/download/v\
+         {{  node_exporter_version  }}/node_exporter-{{  node_exporter_version  }}.linux-amd64.tar.gz"
+    dest: /tmp
+    remote_src: true
+  tags:
+    - prometheus_exporter
+  when: node_exporter_binary_local_dir is not defined
+
+- name: create /opt/prometheus directory
+  ansible.builtin.file:
+    path: /opt/prometheus
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+  changed_when: false
+
+- name: move node_exporter binary
+  ansible.builtin.copy:
+    src: /tmp/node_exporter-{{  node_exporter_version  }}.linux-amd64/node_exporter
+    dest: /opt/prometheus/node_exporter
+    owner: root
+    group: root
+    mode: 0755
+    remote_src: true
+  tags:
+    - prometheus_exporter
+  when: node_exporter_binary_local_dir is not defined
+
+- name: move (existing) node_exporter binary
+  ansible.builtin.copy:
+    src: "{{ node_exporter_binary_local_dir }}/node_exporter"
+    dest: /opt/prometheus/node_exporter
+    owner: root
+    group: root
+    mode: 0755
+    remote_src: true
+  tags:
+    - prometheus_exporter
+  when: node_exporter_binary_local_dir is defined
+
+- name: template systemd unit file
+  ansible.builtin.template:
+    src: templates/node-exporter.service.j2
+    dest: /etc/systemd/system/node_exporter.service
+    owner: root
+    group: root
+    mode: 0755
+  tags:
+    - prometheus_exporter
+
+- name: reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: true
+  tags:
+    - prometheus_exporter
+    
+- name: enable and start node_exporter service
+  ansible.builtin.systemd:
+    name: node_exporter
+    enabled: true
+    state: started
+  tags:
+    - prometheus_exporter
+    - restart

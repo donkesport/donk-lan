@@ -1,0 +1,364 @@
+- name: authentication_forti
+  pfsensible.core.pfsense_alias:
+    name: authentication_forti
+    state: present
+    type: port
+    address: 1000:1005
+
+- name: dns_donk_lan
+  pfsensible.core.pfsense_alias:
+    name: dns_donk_lan
+    state: present
+    type: host
+    address: 10.50.13.10
+
+- name: donk_all_nomad
+  pfsensible.core.pfsense_alias:
+    name: donk_all_nomad
+    state: present
+    type: port
+    address: 4646 4647 4648
+
+- name: donk_ap_1
+  pfsensible.core.pfsense_alias:
+    name: donk_ap_1
+    state: present
+    type: host
+    address: 10.50.32.1
+
+- name: donk_ap_2
+  pfsensible.core.pfsense_alias:
+    name: donk_ap_2
+    state: present
+    type: host
+    address: 10.50.32.2
+
+- name: donk_consul
+  pfsensible.core.pfsense_alias:
+    name: donk_consul
+    state: present
+    type: port
+    address: 8301 8500 8600 8300 8302
+
+- name: donk_games_tcp_csgo
+  pfsensible.core.pfsense_alias:
+    name: donk_games_tcp_csgo
+    state: present
+    type: port
+    address: 27015 27036
+
+- name: donk_games_tcp_discord
+  pfsensible.core.pfsense_alias:
+    name: donk_games_tcp_discord
+    state: present
+    type: port
+    address: 443
+
+- name: donk_games_tcp_dofus
+  pfsensible.core.pfsense_alias:
+    name: donk_games_tcp_dofus
+    state: present
+    type: port
+    address: 80 443 5555
+
+- name: donk_games_tcp_fallguys
+  pfsensible.core.pfsense_alias:
+    name: donk_games_tcp_fallguys
+    state: present
+    type: port
+    address: 27015 27036
+
+- name: donk_games_tcp_internet
+  pfsensible.core.pfsense_alias:
+    name: donk_games_tcp_internet
+    state: present
+    type: port
+    address: donk_games_tcp_discord donk_games_tcp_dofus donk_games_tcp_fallguys donk_games_tcp_lol donk_games_tcp_rocketleague donk_games_tcp_steam donk_tcp_warthunder game_tcp_ac
+
+- name: donk_games_tcp_local
+  pfsensible.core.pfsense_alias:
+    name: donk_games_tcp_local
+    state: present
+    type: port
+    address: donk_games_tcp_csgo donk_games_tcp_minecraft
+
+- name: donk_games_tcp_lol
+  pfsensible.core.pfsense_alias:
+    name: donk_games_tcp_lol
+    state: present
+    type: port
+    address: 8393:8400 2099 5222:5223 8088
+
+- name: donk_games_tcp_minecraft
+  pfsensible.core.pfsense_alias:
+    name: donk_games_tcp_minecraft
+    state: present
+    type: port
+    address: 25565
+
+- name: donk_games_tcp_rocketleague
+  pfsensible.core.pfsense_alias:
+    name: donk_games_tcp_rocketleague
+    state: present
+    type: port
+    address: 27015 27036
+
+- name: donk_games_tcp_steam
+  pfsensible.core.pfsense_alias:
+    name: donk_games_tcp_steam
+    state: present
+    type: port
+    address: 27015:27050
+
+- name: donk_games_udp_csgo
+  pfsensible.core.pfsense_alias:
+    name: donk_games_udp_csgo
+    state: present
+    type: port
+    address: 27015 27020 27031:27036
+
+- name: donk_games_udp_discord
+  pfsensible.core.pfsense_alias:
+    name: donk_games_udp_discord
+    state: present
+    type: port
+    address: 50000:65535
+
+- name: donk_games_udp_dofus
+  pfsensible.core.pfsense_alias:
+    name: donk_games_udp_dofus
+    state: present
+    type: port
+    address: 80 443 5555
+
+- name: donk_games_udp_fallguys
+  pfsensible.core.pfsense_alias:
+    name: donk_games_udp_fallguys
+    state: present
+    type: port
+    address: 27015 27031:27036
+
+- name: donk_games_udp_internet
+  pfsensible.core.pfsense_alias:
+    name: donk_games_udp_internet
+    state: present
+    type: port
+    address: donk_games_udp_discord donk_games_udp_dofus donk_games_udp_fallguys donk_games_udp_lol donk_games_udp_rocketleague donk_games_udp_steam donk_games_udp_twitch donk_udp_warthunder game_udp_ac
+
+- name: donk_games_udp_local
+  pfsensible.core.pfsense_alias:
+    name: donk_games_udp_local
+    state: present
+    type: port
+    address: donk_games_udp_minecraft donk_games_udp_csgo donk_games_udp_teeworlds
+
+- name: donk_games_udp_lol
+  pfsensible.core.pfsense_alias:
+    name: donk_games_udp_lol
+    state: present
+    type: port
+    address: 5000:5500 8088
+
+- name: donk_games_udp_minecraft
+  pfsensible.core.pfsense_alias:
+    name: donk_games_udp_minecraft
+    state: present
+    type: port
+    address: 25565
+
+- name: donk_games_udp_rocketleague
+  pfsensible.core.pfsense_alias:
+    name: donk_games_udp_rocketleague
+    state: present
+    type: port
+    address: 7000:9000 27015 27031:27036
+
+- name: donk_games_udp_steam
+  pfsensible.core.pfsense_alias:
+    name: donk_games_udp_steam
+    state: present
+    type: port
+    address: 27015:27050
+
+- name: donk_games_udp_teeworlds
+  pfsensible.core.pfsense_alias:
+    name: donk_games_udp_teeworlds
+    state: present
+    type: port
+    address: 8303
+
+- name: donk_games_udp_twitch
+  pfsensible.core.pfsense_alias:
+    name: donk_games_udp_twitch
+    state: present
+    type: port
+    address: 5050
+
+- name: donk_infra_tcp_web
+  pfsensible.core.pfsense_alias:
+    name: donk_infra_tcp_web
+    state: present
+    type: port
+    address: 80 443
+
+- name: donk_infra_udp_dns
+  pfsensible.core.pfsense_alias:
+    name: donk_infra_udp_dns
+    state: present
+    type: port
+    address: 53
+
+- name: donk_monitoring_ports
+  pfsensible.core.pfsense_alias:
+    name: donk_monitoring_ports
+    state: present
+    type: port
+    address: donk_prometheus donk_promtail
+
+- name: donk_prometheus
+  pfsensible.core.pfsense_alias:
+    name: donk_prometheus
+    state: present
+    type: port
+    address: 9100
+
+- name: donk_prometheus_admin
+  pfsensible.core.pfsense_alias:
+    name: donk_prometheus_admin
+    state: present
+    type: port
+    address: 9090
+
+- name: donk_promtail
+  pfsensible.core.pfsense_alias:
+    name: donk_promtail
+    state: present
+    type: port
+    address: 9080
+
+- name: donk_tcp_warthunder
+  pfsensible.core.pfsense_alias:
+    name: donk_tcp_warthunder
+    state: present
+    type: port
+    address: 5222 7850:7854 7800:7802 20443 33333 27022:27042 6881 8090
+
+- name: donk_udp_warthunder
+  pfsensible.core.pfsense_alias:
+    name: donk_udp_warthunder
+    state: present
+    type: port
+    address: 20000:30000 3478:3480 16172
+
+- name: FortiGate
+  pfsensible.core.pfsense_alias:
+    name: FortiGate
+    state: present
+    type: host
+    address: 10.50.10.1
+
+- name: game_tcp_ac
+  pfsensible.core.pfsense_alias:
+    name: game_tcp_ac
+    state: present
+    type: port
+    address: 9600 8081 27015:27030 27036:27037
+
+- name: game_udp_ac
+  pfsensible.core.pfsense_alias:
+    name: game_udp_ac
+    state: present
+    type: port
+    address: 4380 8081 27000:27031 27036
+
+- name: monitor_donk_lan
+  pfsensible.core.pfsense_alias:
+    name: monitor_donk_lan
+    state: present
+    type: host
+    address: 10.50.11.100
+
+- name: nomad_games_node1
+  pfsensible.core.pfsense_alias:
+    name: nomad_games_node1
+    state: present
+    type: host
+    address: 10.50.14.1
+
+- name: nomad_infra_node1
+  pfsensible.core.pfsense_alias:
+    name: nomad_infra_node1
+    state: present
+    type: host
+    address: 10.50.13.1
+
+- name: nomad_monitor_node1
+  pfsensible.core.pfsense_alias:
+    name: nomad_monitor_node1
+    state: present
+    type: host
+    address: 10.50.11.1
+
+- name: registry_donk_lan
+  pfsensible.core.pfsense_alias:
+    name: registry_donk_lan
+    state: present
+    type: host
+    address: 10.50.13.10
+
+- name: RFC_1918
+  pfsensible.core.pfsense_alias:
+    name: RFC_1918
+    state: present
+    type: network
+    address: 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16
+
+- name: 10_DONK_interco_address
+  pfsensible.core.pfsense_alias:
+    name: 10_DONK_interco_address
+    state: present
+    type: host
+    address: "{{ ansible_host }}"
+
+- name: 11_SRV_Monitoring_address
+  pfsensible.core.pfsense_alias:
+    name: 11_SRV_Monitoring_address
+    state: present
+    type: host
+    address: "{{ fw_monitoring_address }}"
+
+- name: 12_SRV_Automatisation_address
+  pfsensible.core.pfsense_alias:
+    name: 12_SRV_Automatisation_address
+    state: present
+    type: host
+    address: "{{ fw_automatisation_address }}"
+
+
+- name: 13_SRV_Infra_address
+  pfsensible.core.pfsense_alias:
+    name: 13_SRV_Infra_address
+    state: present
+    type: host
+    address: "{{ fw_infra_address }}"
+
+- name: 14_SRV_Games_address
+  pfsensible.core.pfsense_alias:
+    name: 14_SRV_Games_address
+    state: present
+    type: host
+    address: "{{ fw_games_address }}"
+
+- name: 31_STA_ADMIN_address
+  pfsensible.core.pfsense_alias:
+    name: 31_STA_ADMIN_address
+    state: present
+    type: host
+    address: "{{ fw_admin_address }}"
+  
+- name: 32_STA_Joueurs_address
+  pfsensible.core.pfsense_alias:
+    name: 32_STA_Joueurs_address
+    state: present
+    type: host
+    address: "{{ fw_joueurs_address }}"

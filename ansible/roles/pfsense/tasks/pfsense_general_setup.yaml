@@ -1,0 +1,23 @@
+---
+- name: Setup hostname and domaine
+  pfsensible.core.pfsense_setup:
+    hostname: "{{ hostname }}"
+    domain: "{{ domain }}"
+
+- name: Setup timezone
+  pfsensible.core.pfsense_setup:
+    timezone: Europe/Paris
+    language: en_US
+
+# - name: Create new admin account
+#   pfsensible.core.pfsense_user:
+#     name: "{{ operator_account }}"
+#     password: "{{ operator_password }}"
+#     state: present
+#     groups: [admins]
+#     priv: [ 'page-all' ]
+
+# - name: Delete default admin user
+#   pfsensible.core.pfsense_user:
+#     name: admin
+#     state: absent

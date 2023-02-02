@@ -1,0 +1,132 @@
+---
+- name: "Import variables"
+  hosts: drone
+  tasks:
+    - include_vars: secrets_drone.yml
+    - debug: msg="Hello, {{ drone_gitea_server }}!"
+  tags:
+    - always
+
+- hosts: drone
+  become: yes
+  roles:
+    - docker # install docker3
+  tags:
+    - dockerinstall
+
+- name: "deploy dockers"
+  hosts: drone
+  become: yes
+  tasks:
+    - name: "install pip : not needed if packer is redone"
+      ansible.builtin.package:
+        name: python3-pip
+        state: present
+    - name: "install docker for python"
+      ansible.builtin.pip: 
+        name: docker
+    - name: "pull docker image : drone server"
+      community.docker.docker_image:
+        name: "drone/drone:2"
+        source: pull
+    - name: "start container : drone server"
+      community.docker.docker_container:
+        name: drone
+        image: "drone/drone:2"
+        env:
+          DRONE_GITEA_SERVER="{{ drone_gitea_server }}"
+          DRONE_GITEA_CLIENT_ID="{{ drone_gitea_client_id }}"
+          DRONE_GITEA_CLIENT_SECRET="{{ drone_gitea_client_secret }}"
+          DRONE_RPC_SECRET="{{ drone_rpc_secret }}"
+          DRONE_SERVER_HOST="drone.donk.lan"
+          DRONE_SERVER_PROTO="http"
+          DRONE_GIT_ALWAYS_AUTH=true
+        volumes:
+          - /var/lib/drone:/data
+        ports:
+          - "80:80"
+          - "443:443"
+        restart: true
+        detach: true
+    - name: "pull docker image : drone runner"
+      community.docker.docker_image:
+        name: "drone/drone-runner-docker:1"
+        source: pull
+    - name: "start container : drone runner"
+      community.docker.docker_container:
+        name: drone-runner
+        image: "drone/drone-runner-docker:1"
+        env:
+          DRONE_RUNNER_NAME="runner1"
+          DRONE_RUNNER_CAPACITY=2
+          DRONE_RPC_SECRET="{{ drone_rpc_secret }}"
+          DRONE_RPC_HOST="drone.donk.lan"
+          DRONE_RPC_PROTO="http"
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock
+        ports:
+          - "3000:3000"
+        restart: true
+        detach: true
+    - name: "Verify drone connection to runner"
+      become: yes
+      shell: "docker logs drone-runner"
+      register: output
+    - debug: 
+        var: output
+  tags:
+    - deploy
+
+- name: "deploy docker - runners only"
+  hosts: drone
+  become: yes
+  tasks:
+    - name: "pull docker image : drone runner"
+      community.docker.docker_image:
+        name: "drone/drone-runner-docker:1"
+        source: pull
+    - name: "start container : drone runner"
+      community.docker.docker_container:
+        name: drone-runner
+        image: "drone/drone-runner-docker:1"
+        env:
+          DRONE_RUNNER_NAME="runner1"
+          DRONE_RUNNER_CAPACITY=2
+          DRONE_RPC_SECRET="{{ drone_rpc_secret }}"
+          DRONE_RPC_HOST="drone.donk.lan"
+          DRONE_RPC_PROTO="http"
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock
+        ports:
+          - "3000:3000"
+        restart: true
+        detach: true
+    - name: "pull docker image : drone runner ssh"
+      community.docker.docker_image:
+        name: "drone/drone-runner-ssh"
+        source: pull
+    - name: "start container : drone runner ssh"
+      community.docker.docker_container:
+        name: drone-runner-ssh
+        image: "drone/drone-runner-ssh"
+        env:
+          DRONE_RUNNER_NAME="runner2"
+          DRONE_RUNNER_CAPACITY=2
+          DRONE_RPC_SECRET="{{ drone_rpc_secret }}"
+          DRONE_RPC_HOST="drone.donk.lan"
+          DRONE_RPC_PROTO="http"
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock
+        ports:
+          - "3001:3000"
+        restart: true
+        detach: true
+    - name: "Verify drone connection to runner"
+      become: yes
+      shell: "docker logs drone-runner"
+      register: output
+    - debug: 
+        var: output
+  tags:
+    - deploy-runners
+

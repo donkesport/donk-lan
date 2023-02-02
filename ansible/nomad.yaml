@@ -1,0 +1,52 @@
+---
+# File: site.yml - Example nomad site playbook
+
+- name: Installing Nomad
+  hosts: nomad_instance
+  become: yes
+  become_user: root
+  roles:
+    - { role: nomad }
+
+  tasks:
+    - name: "install python-nomad"
+      ansible.builtin.pip: 
+        name: python-nomad
+    - name: Start nomad
+      service: name=nomad state=started enabled=yes
+
+- hosts: nomad_instance
+  become: yes
+  roles:
+    - docker # install docker3
+  tags:
+    - dockerinstall
+
+
+# Adding volume.conf
+# - name: Push volume configuration
+#   hosts: nomad_clients
+#   become: yes
+#   tasks:
+#    - name: Remove file (delete file)
+#      ansible.builtin.file:
+#        path: /etc/nomad.d/custom.hcl
+#        state: absent
+#    - name: Inserting line into custom.hcl file
+#      ansible.builtin.lineinfile:
+#        path: /etc/nomad.d/custom.hcl
+#        line: '
+#        plugin "docker" {
+#         config {
+#           volumes {
+#                   enabled = true
+#           }
+#           allow_caps = ["audit_write", "chown", "dac_override", "fowner", "fsetid", "kill", "mknod",  "net_bind_service", "setfcap", "setgid", "setpcap", "setuid", "sys_chroot", "net_admin", "net_raw", "sys_module"]
+#         }
+#       }
+#       '
+#        create: yes
+#    - name: Restart service
+#      ansible.builtin.service:
+#       name: nomad
+#       state: restarted

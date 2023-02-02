@@ -1,0 +1,100 @@
+all:
+ vars:
+   ansible_ssh_private_key_file: ~/.ssh/id_ed25519_ansible
+
+
+# Pfsense 
+pfsense_cores:
+  hosts:
+    pfsense:
+      ansible_host: 10.50.10.254 # ip for test : .254 in production
+  vars:
+    ansible_ssh_user: donkesport
+    ansible_ssh_port: 22
+
+# network:
+#   hosts:
+#     pfsense:
+#       ansible_host: 10.50.11.254
+#     traefik:
+#       ansible_host: 10.50.14.1
+
+vm_linux:
+  children:
+    # ci:
+    #   hosts:
+    #     gitea:
+    #       ansible_host: 192.168.2.93
+    #     drone:
+    #       ansible_host: 192.168.2.94
+    registry_vms:
+      hosts:
+        registry:
+          ansible_host: 10.50.13.10
+
+    monitoring_vms:
+      hosts:
+        monitoring:
+          ansible_host: 10.50.11.100
+
+    nomad_instance:
+      children:
+        nomad_servers: # TODO : nomad cluster : modifier nomad_bootstrap_expect dans nomad/default/main.yaml
+          hosts:
+            nomad_server_1:
+              ansible_host: 10.50.12.11
+          vars:
+            nomad_node_role: server
+        nomad_clients:
+          hosts:
+            nomad_monitor_node1:
+              ansible_host: 10.50.11.1
+            nomad_infra_node1:
+              ansible_host: 10.50.13.1
+            nomad_games_node1:
+              ansible_host: 10.50.14.1
+          vars:
+            nomad_node_role: client
+            nomad_plugins:
+              docker:
+                config:
+                  volumes:
+                    enabled: true
+                  allow_caps: 
+                    - audit_write
+                    - chown
+                    - dac_override
+                    - fowner
+                    - fsetid
+                    - kill
+                    - mknod
+                    - net_bind_service
+                    - setfcap
+                    - setgid
+                    - setpcap
+                    - setuid
+                    - sys_chroot
+                    - net_admin
+                    - net_raw
+                    - sys_module
+
+    consul_instances:
+      children:
+        consul_servers: # TODO : consul cluster : modifier consul_bootstrap_expect et consul_bootstrap_expect_value dans consul/default/main.yaml
+          hosts:
+            consul_server_1: 
+              ansible_host: 10.50.12.1
+          vars:
+            consul_node_role: server
+        consul_clients:
+          hosts:
+            nomad_server_node1:
+              ansible_host: 10.50.12.11
+            nomad_monitor_node1:
+              ansible_host: 10.50.11.1
+            nomad_infra_node1:
+              ansible_host: 10.50.13.1
+            nomad_games_node1:
+              ansible_host: 10.50.14.1
+          vars:
+            consul_node_role: client

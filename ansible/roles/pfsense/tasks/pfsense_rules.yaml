@@ -1,0 +1,732 @@
+# WAN Rules
+
+- name: Allow forti to use RADIUS server
+  pfsensible.core.pfsense_rule:
+    name: Allow forti to use RADIUS server
+    action: pass
+    interface: 10_DONK_interco
+    ipprotocol: inet
+    protocol: udp
+    source: FortiGate
+    destination:  13_SRV_Infra
+    destination_port: 1812
+    state: present
+
+- name: Allow using traefik for RADIUS auth
+  pfsensible.core.pfsense_rule:
+    name: Allow using traefik for RADIUS auth
+    action: pass
+    interface: 10_DONK_interco
+    ipprotocol: inet
+    protocol: udp
+    source: FortiGate
+    destination:  14_SRV_Games
+    destination_port: 1812
+    state: present
+
+- name: Allow rsyslog
+  pfsensible.core.pfsense_rule:
+    name: Allow rsyslog
+    action: pass
+    interface: 10_DONK_interco
+    ipprotocol: inet
+    protocol: udp
+    source: FortiGate
+    destination:  monitor_donk_lan
+    destination_port: 514
+    state: present
+
+- name: VPN Bypass
+  pfsensible.core.pfsense_rule:
+    name: VPN Bypass
+    action: pass
+    interface: 10_DONK_interco
+    ipprotocol: inet
+    protocol: any
+    source: 192.168.2.20
+    destination:  any
+    state: present
+
+- name: VPN Bypass (if nat by fortipouet)
+  pfsensible.core.pfsense_rule:
+    name: VPN Bypass (if nat by fortipouet)
+    action: pass
+    interface: 10_DONK_interco
+    ipprotocol: inet
+    protocol: any
+    source: 10.50.10.1
+    destination:  any
+    state: present
+
+- name: Allow all and logs
+  pfsensible.core.pfsense_rule:
+    name: Allow all and logs
+    action: pass
+    interface: 10_DONK_interco
+    ipprotocol: inet
+    protocol: any
+    source: any
+    destination:  any
+    state: present
+
+
+# 11_SRV_Monitoring Rules
+
+- name: Prometheus packet
+  pfsensible.core.pfsense_rule:
+    name: Prometheus packet
+    action: pass
+    interface: 11_SRV_Monitoring
+    ipprotocol: inet
+    protocol: tcp/udp
+    source: monitor_donk_lan
+    destination:  11_SRV_Monitoring_address
+    destination_port: donk_prometheus
+    state: present
+
+- name: Send log to syslog server
+  pfsensible.core.pfsense_rule:
+    name: Send log to syslog server
+    action: pass
+    interface: 11_SRV_Monitoring
+    ipprotocol: inet
+    protocol: udp
+    source: 11_SRV_Monitoring_address
+    destination:  monitor_donk_lan
+    destination_port: 514
+    state: present
+
+- name: Temp  Allow onyl intern dns server
+  pfsensible.core.pfsense_rule:
+    name: Temp  Allow onyl intern dns server
+    action: pass
+    interface: 11_SRV_Monitoring
+    ipprotocol: inet
+    protocol: udp
+    source: 11_SRV_Monitoring
+    destination:  any
+    destination_port: 53
+    state: present
+
+- name: Prometheus packet
+  pfsensible.core.pfsense_rule:
+    name: Prometheus packet
+    action: pass
+    interface: 11_SRV_Monitoring
+    ipprotocol: inet
+    protocol: tcp/udp
+    source: monitor_donk_lan
+    destination:  10_DONK_interco
+    destination_port: donk_monitoring_ports
+    state: present
+
+- name: Prometheus packet
+  pfsensible.core.pfsense_rule:
+    name: Prometheus packet
+    action: pass
+    interface: 11_SRV_Monitoring
+    ipprotocol: inet
+    protocol: tcp/udp
+    source: monitor_donk_lan
+    destination:  12_SRV_Automatisation
+    destination_port: donk_monitoring_ports
+    state: present
+
+- name: Prometheus packet
+  pfsensible.core.pfsense_rule:
+    name: Prometheus packet
+    action: pass
+    interface: 11_SRV_Monitoring
+    ipprotocol: inet
+    protocol: tcp/udp
+    source: monitor_donk_lan
+    destination:  13_SRV_Infra
+    destination_port: donk_monitoring_ports
+    state: present
+
+- name: Prometheus packet
+  pfsensible.core.pfsense_rule:
+    name: Prometheus packet
+    action: pass
+    interface: 11_SRV_Monitoring
+    ipprotocol: inet
+    protocol: tcp/udp
+    source: monitor_donk_lan
+    destination:  14_SRV_Games
+    destination_port: donk_monitoring_ports
+    state: present
+
+- name: Traefik monitoring
+  pfsensible.core.pfsense_rule:
+    name: Traefik monitoring
+    action: pass
+    interface: 11_SRV_Monitoring
+    ipprotocol: inet
+    protocol: tcp/udp
+    source: monitor_donk_lan
+    destination:  nomad_games_node1
+    destination_port: 8080
+    state: present
+
+- name: Prometheus packet
+  pfsensible.core.pfsense_rule:
+    name: Prometheus packet
+    action: pass
+    interface: 11_SRV_Monitoring
+    ipprotocol: inet
+    protocol: tcp/udp
+    source: monitor_donk_lan
+    destination:  32_STA_Joueurs
+    destination_port: donk_monitoring_ports
+    state: present
+
+- name: Nomad communication
+  pfsensible.core.pfsense_rule:
+    name: Nomad communication
+    action: pass
+    interface: 11_SRV_Monitoring
+    ipprotocol: inet
+    protocol: tcp/udp
+    source: 11_SRV_Monitoring
+    destination:  12_SRV_Automatisation
+    destination_port: donk_all_nomad
+    state: present
+
+- name: Consul communication
+  pfsensible.core.pfsense_rule:
+    name: Consul communication
+    action: pass
+    interface: 11_SRV_Monitoring
+    ipprotocol: inet
+    protocol: tcp/udp
+    source: 11_SRV_Monitoring
+    destination:  12_SRV_Automatisation
+    destination_port: donk_consul
+    state: present
+
+- name: Consul communication
+  pfsensible.core.pfsense_rule:
+    name: Consul communication
+    action: pass
+    interface: 11_SRV_Monitoring
+    ipprotocol: inet
+    protocol: tcp/udp
+    source: 11_SRV_Monitoring
+    destination:  13_SRV_Infra
+    destination_port: donk_consul
+    state: present
+
+- name: Consul communication
+  pfsensible.core.pfsense_rule:
+    name: Consul communication
+    action: pass
+    interface: 11_SRV_Monitoring
+    ipprotocol: inet
+    protocol: tcp/udp
+    source: 11_SRV_Monitoring
+    destination:  14_SRV_Games
+    destination_port: donk_consul
+    state: present
+
+- name: Allow all and logs
+  pfsensible.core.pfsense_rule:
+    name: Allow all and logs
+    action: pass
+    interface: 11_SRV_Monitoring
+    ipprotocol: inet
+    protocol: any
+    source: any
+    destination:  any
+    state: present
+
+# 12_SRV_Automatisation Rules
+- name: Allow DNS
+  pfsensible.core.pfsense_rule:
+    name: Allow DNS
+    action: pass
+    interface: 12_SRV_Automatisation
+    ipprotocol: inet
+    protocol: udp
+    source: 12_SRV_Automatisation
+    destination:  dns_donk_lan
+    destination_port: 53
+    state: present
+
+- name: Nomad communication
+  pfsensible.core.pfsense_rule:
+    name: Nomad communication
+    action: pass
+    interface: 12_SRV_Automatisation
+    ipprotocol: inet
+    protocol: tcp/udp
+    source: 12_SRV_Automatisation
+    destination:  11_SRV_Monitoring
+    destination_port: donk_all_nomad
+    state: present
+
+- name: Nomad communication
+  pfsensible.core.pfsense_rule:
+    name: Nomad communication
+    action: pass
+    interface: 12_SRV_Automatisation
+    ipprotocol: inet
+    protocol: tcp/udp
+    source: 12_SRV_Automatisation
+    destination:  13_SRV_Infra
+    destination_port: donk_all_nomad
+    state: present
+
+- name: Nomad communication
+  pfsensible.core.pfsense_rule:
+    name: Nomad communication
+    action: pass
+    interface: 12_SRV_Automatisation
+    ipprotocol: inet
+    protocol: tcp/udp
+    source: 12_SRV_Automatisation
+    destination:  14_SRV_Games
+    destination_port: donk_all_nomad
+    state: present
+
+- name: Consul communication
+  pfsensible.core.pfsense_rule:
+    name: Consul communication
+    action: pass
+    interface: 12_SRV_Automatisation
+    ipprotocol: inet
+    protocol: tcp/udp
+    source: 12_SRV_Automatisation
+    destination:  11_SRV_Monitoring
+    destination_port: donk_consul
+    state: present
+
+- name: Consul communication
+  pfsensible.core.pfsense_rule:
+    name: Consul communication
+    action: pass
+    interface: 12_SRV_Automatisation
+    ipprotocol: inet
+    protocol: tcp/udp
+    source: 12_SRV_Automatisation
+    destination:  13_SRV_Infra
+    destination_port: donk_consul
+    state: present
+
+- name: Consul communication
+  pfsensible.core.pfsense_rule:
+    name: Consul communication
+    action: pass
+    interface: 12_SRV_Automatisation
+    ipprotocol: inet
+    protocol: tcp/udp
+    source: 12_SRV_Automatisation
+    destination:  14_SRV_Games
+    destination_port: donk_consul
+    state: present
+
+- name: Allow all and logs
+  pfsensible.core.pfsense_rule:
+    name: Allow all and logs
+    action: pass
+    interface: 12_SRV_Automatisation
+    ipprotocol: inet
+    protocol: any
+    source: any
+    destination:  any
+    state: present
+
+# 13_SRV_Infra Rules
+- name: Allow DNS
+  pfsensible.core.pfsense_rule:
+    name: Allow DNS
+    action: pass
+    interface: 13_SRV_Infra
+    ipprotocol: inet
+    protocol: udp
+    source: 13_SRV_Infra
+    destination:  dns_donk_lan
+    destination_port: 53
+    state: present
+
+- name: Allow DNS to Internet
+  pfsensible.core.pfsense_rule:
+    name: Allow DNS to Internet
+    action: pass
+    interface: 13_SRV_Infra
+    ipprotocol: inet
+    protocol: udp
+    source: dns_donk_lan
+    destination:  any
+    destination_port: 53
+    state: present
+
+- name: Consul communication
+  pfsensible.core.pfsense_rule:
+    name: Consul communication
+    action: pass
+    interface: 13_SRV_Infra
+    ipprotocol: inet
+    protocol: tcp/udp
+    source: 13_SRV_Infra
+    destination:  11_SRV_Monitoring
+    destination_port: donk_consul
+    state: present
+
+- name: Consul communication
+  pfsensible.core.pfsense_rule:
+    name: Consul communication
+    action: pass
+    interface: 13_SRV_Infra
+    ipprotocol: inet
+    protocol: tcp/udp
+    source: 13_SRV_Infra
+    destination:  12_SRV_Automatisation
+    destination_port: donk_consul
+    state: present
+
+- name: Consul communication
+  pfsensible.core.pfsense_rule:
+    name: Consul communication
+    action: pass
+    interface: 13_SRV_Infra
+    ipprotocol: inet
+    protocol: tcp/udp
+    source: 13_SRV_Infra
+    destination:  14_SRV_Games
+    destination_port: donk_consul
+    state: present
+
+- name: Allow all and logs
+  pfsensible.core.pfsense_rule:
+    name: Allow all and logs
+    action: pass
+    interface: 13_SRV_Infra
+    ipprotocol: inet
+    protocol: any
+    source: any
+    destination:  any
+    state: present
+
+# 14_SRV_Games Rules
+- name: Allow DNS
+  pfsensible.core.pfsense_rule:
+    name: Allow DNS
+    action: pass
+    interface: 14_SRV_Games
+    ipprotocol: inet
+    protocol: udp
+    source: 14_SRV_Games
+    destination:  dns_donk_lan
+    destination_port: 53
+    state: present
+
+- name: Nomad communication
+  pfsensible.core.pfsense_rule:
+    name: Nomad communication
+    action: pass
+    interface: 14_SRV_Games
+    ipprotocol: inet
+    protocol: tcp
+    source: 14_SRV_Games
+    destination:  12_SRV_Automatisation
+    destination_port: donk_all_nomad
+    state: present
+
+- name: Allow apt download (http)
+  pfsensible.core.pfsense_rule:
+    name: Allow apt download (http)
+    action: pass
+    interface: 14_SRV_Games
+    ipprotocol: inet
+    protocol: tcp
+    source: 14_SRV_Games
+    destination:  "!RFC_1918"
+    destination_port: 80
+    state: present
+
+- name: Allow apt download (https)
+  pfsensible.core.pfsense_rule:
+    name: Allow apt download (https)
+    action: pass
+    interface: 14_SRV_Games
+    ipprotocol: inet
+    protocol: tcp
+    source: 14_SRV_Games
+    destination:  "!RFC_1918"
+    destination_port: 443
+    state: present
+
+- name: Consul communication
+  pfsensible.core.pfsense_rule:
+    name: Consul communication
+    action: pass
+    interface: 14_SRV_Games
+    ipprotocol: inet
+    protocol: tcp/udp
+    source: 14_SRV_Games
+    destination:  11_SRV_Monitoring
+    destination_port: donk_consul
+    state: present
+
+- name: Consul communication
+  pfsensible.core.pfsense_rule:
+    name: Consul communication
+    action: pass
+    interface: 14_SRV_Games
+    ipprotocol: inet
+    protocol: tcp/udp
+    source: 14_SRV_Games
+    destination:  12_SRV_Automatisation
+    destination_port: donk_consul
+    state: present
+
+- name: Consul communication
+  pfsensible.core.pfsense_rule:
+    name: Consul communication
+    action: pass
+    interface: 14_SRV_Games
+    ipprotocol: inet
+    protocol: tcp/udp
+    source: 14_SRV_Games
+    destination:  13_SRV_Infra
+    destination_port: donk_consul
+    state: present
+
+- name: Allow all and logs
+  pfsensible.core.pfsense_rule:
+    name: Allow all and logs
+    action: pass
+    interface: 14_SRV_Games
+    ipprotocol: inet
+    protocol: any
+    source: any
+    destination:  any
+    state: present
+
+# 31_STA_ADMIN Rules
+- name: Administration du pare-feu
+  pfsensible.core.pfsense_rule:
+    name: Administration du pare-feu
+    action: pass
+    interface: 31_STA_ADMIN
+    ipprotocol: inet
+    protocol: tcp
+    source: 31_STA_ADMIN
+    destination:  31_STA_ADMIN_address
+    destination_port: 443
+    state: present
+
+- name: Administration du pare-feu
+  pfsensible.core.pfsense_rule:
+    name: Administration du pare-feu
+    action: pass
+    interface: 31_STA_ADMIN
+    ipprotocol: inet
+    protocol: tcp
+    source: 31_STA_ADMIN
+    destination:  31_STA_ADMIN_address
+    destination_port: 22
+    state: present
+
+# - name: Deny all in destination of firewall
+#   pfsensible.core.pfsense_rule:
+#     name: Deny all in destination of firewall
+#     action: block
+#     interface: 31_STA_ADMIN
+#     ipprotocol: inet
+#     protocol: any
+#     source: any
+#     destination:  31_STA_ADMIN_address
+#     state: present
+
+- name: Allow DNS
+  pfsensible.core.pfsense_rule:
+    name: Allow DNS
+    action: pass
+    interface: 31_STA_ADMIN
+    ipprotocol: inet
+    protocol: udp
+    source: 31_STA_ADMIN
+    destination:  dns_donk_lan
+    destination_port: 53
+    state: present
+
+- name: Administration des machines de monitoring
+  pfsensible.core.pfsense_rule:
+    name: Administration des machines de monitoring
+    action: pass
+    interface: 31_STA_ADMIN
+    ipprotocol: inet
+    protocol: tcp
+    source: 31_STA_ADMIN
+    destination:  11_SRV_Monitoring
+    destination_port: 22
+    state: present
+
+- name: Acces web grafana
+  pfsensible.core.pfsense_rule:
+    name: Acces web grafana
+    action: pass
+    interface: 31_STA_ADMIN
+    ipprotocol: inet
+    protocol: tcp
+    source: 31_STA_ADMIN
+    destination:  11_SRV_Monitoring
+    destination_port: 3000
+    state: present
+
+- name: Acces web prometheus
+  pfsensible.core.pfsense_rule:
+    name: Acc&egrave;s web prometheus
+    action: pass
+    interface: 31_STA_ADMIN
+    ipprotocol: inet
+    protocol: tcp
+    source: 31_STA_ADMIN
+    destination:  monitor_donk_lan
+    destination_port: donk_prometheus_admin
+    state: present
+
+- name: Allow admin to ssh everywhere
+  pfsensible.core.pfsense_rule:
+    name: Allow admin to ssh everywhere
+    action: pass
+    interface: 31_STA_ADMIN
+    ipprotocol: inet
+    protocol: tcp
+    source: 31_STA_ADMIN
+    destination:  any
+    destination_port: 22
+    state: present
+
+- name: Temp  Allow all and logs
+  pfsensible.core.pfsense_rule:
+    name: Temp  Allow all and logs
+    action: pass
+    interface: 31_STA_ADMIN
+    ipprotocol: inet
+    protocol: any
+    source: any
+    destination:  any
+    state: present
+
+
+# 32_STA_Joueurs Rules
+- name: Deny all in destination of firewall
+  pfsensible.core.pfsense_rule:
+    name: Deny all in destination of firewall
+    action: block
+    interface: 32_STA_Joueurs
+    ipprotocol: inet
+    protocol: any
+    source: any
+    destination:  32_STA_Joueurs_address
+    state: present
+
+- name: Allow DNS
+  pfsensible.core.pfsense_rule:
+    name: Allow DNS
+    action: pass
+    interface: 32_STA_Joueurs
+    ipprotocol: inet
+    protocol: udp
+    source: 32_STA_Joueurs
+    destination:  dns_donk_lan
+    destination_port: 53
+    state: present
+
+- name: Portail captif
+  pfsensible.core.pfsense_rule:
+    name: Portail captif
+    action: pass
+    interface: 32_STA_Joueurs
+    ipprotocol: inet
+    protocol: tcp/udp
+    source: 32_STA_Joueurs
+    destination:  10.50.10.1
+    destination_port: authentication_forti
+    state: present
+
+- name: All Games in local server
+  pfsensible.core.pfsense_rule:
+    name: All Games in local server
+    action: pass
+    interface: 32_STA_Joueurs
+    ipprotocol: inet
+    protocol: tcp
+    source: 32_STA_Joueurs
+    destination:  14_SRV_Games
+    destination_port: donk_games_tcp_local
+    state: present
+
+- name: All Games in local server
+  pfsensible.core.pfsense_rule:
+    name: All Games in local server
+    action: pass
+    interface: 32_STA_Joueurs
+    ipprotocol: inet
+    protocol: udp
+    source: 32_STA_Joueurs
+    destination:  14_SRV_Games
+    destination_port: donk_games_udp_local
+    state: present
+
+- name: Allow HTTP conversation with www.donk.lan
+  pfsensible.core.pfsense_rule:
+    name: Allow HTTP conversation with www.donk.lan
+    action: pass
+    interface: 32_STA_Joueurs
+    ipprotocol: inet
+    protocol: tcp
+    source: 32_STA_Joueurs
+    destination:  13_SRV_Infra
+    destination_port: donk_infra_tcp_web
+    state: present
+
+- name: Allow WEB
+  pfsensible.core.pfsense_rule:
+    name: Allow WEB
+    action: pass
+    interface: 32_STA_Joueurs
+    ipprotocol: inet
+    protocol: udp
+    source: 32_STA_Joueurs
+    destination:  "!RFC_1918"
+    destination_port: 443
+    state: present
+
+- name: Allow Games on internet
+  pfsensible.core.pfsense_rule:
+    name: Allow Games on internet
+    action: pass
+    interface: 32_STA_Joueurs
+    ipprotocol: inet
+    protocol: tcp
+    source: 32_STA_Joueurs
+    destination:  "!RFC_1918"
+    destination_port: donk_games_tcp_internet
+    state: present
+
+- name: Allow Games on internet
+  pfsensible.core.pfsense_rule:
+    name: Allow Games on internet
+    action: pass
+    interface: 32_STA_Joueurs
+    ipprotocol: inet
+    protocol: udp
+    source: 32_STA_Joueurs
+    destination:  "!RFC_1918"
+    destination_port: donk_games_udp_internet
+    state: present
+
+- name: Allow all and logs
+  pfsensible.core.pfsense_rule:
+    name: Allow all and logs
+    action: block
+    interface: 32_STA_Joueurs
+    ipprotocol: inet
+    protocol: any
+    source: any
+    destination:  any
+    state: present
+

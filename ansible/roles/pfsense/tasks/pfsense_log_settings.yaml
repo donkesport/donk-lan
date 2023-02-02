@@ -1,0 +1,14 @@
+---
+- name: "setup remote syslog"
+  pfsensible.core.pfsense_log_settings:
+    enable: true 
+    remoteserver:  "{{ hostvars['monitoring'].ansible_host }}"
+    disablelocallogging: false
+    auth: true 
+    logfilter: true  
+    logformat: rfc5424 # syslog
+    reverse: true
+    sourceip:  "{{ fw_monitoring_address }}"
+    system: true 
+
+...

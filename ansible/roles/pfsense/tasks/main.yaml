@@ -1,0 +1,54 @@
+---
+# File: main.yml - Main tasks for pfsense
+- name: Adding anti block rule on WAN address
+  pfsensible.core.pfsense_rule:
+    name: 'anti lock out SSH'
+    action: pass
+    interface: wan
+    ipprotocol: inet
+    protocol: tcp
+    source: any
+    destination: any
+    destination_port: 22
+    state: present
+
+- name: General setup
+  include_tasks: pfsense_general_setup.yaml
+
+- name: General interfaces configuration 
+  include_tasks: pfsense_interfaces.yaml
+
+- name: Adding anti block rule on WAN address WARNING dev only
+  pfsensible.core.pfsense_rule:
+    name: 'anti lock out HTTPS'
+    action: pass
+    interface: 10_DONK_interco
+    ipprotocol: inet
+    protocol: tcp
+    source: any
+    destination: any
+    destination_port : 443
+    state: present
+
+- name: Adding anti block rule on WAN address WARNING dev only
+  pfsensible.core.pfsense_rule:
+    name: 'anti lock out HTTP'
+    action: pass
+    interface: 10_DONK_interco
+    ipprotocol: inet
+    protocol: tcp
+    source: any
+    destination: any
+    destination_port : 80
+    state: present
+
+- name: Setup Alias
+  include_tasks: pfsense_alias.yaml
+
+- name: Setup Firewall Rule
+  include_tasks: pfsense_rules.yaml
+
+- name: Setup logs configuration 
+  include_tasks: pfsense_log_settings.yaml
+    
+

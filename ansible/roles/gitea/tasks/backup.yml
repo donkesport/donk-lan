@@ -1,0 +1,45 @@
+---
+- name: Get service facts
+  ansible.builtin.service_facts:
+
+- name: Backup block
+  when:
+    - ansible_facts.services["gitea.service"] is defined
+    - ansible_facts.services["gitea.service"].state == "running"
+    - gitea_active_version.stdout != gitea_version_target
+  block:
+    - name: Stopping gitea before upgrade
+      become: true
+      ansible.builtin.systemd:
+        name: gitea
+        state: stopped
+      when: ansible_service_mgr == "systemd"
+
+    - name: "Create backup directory"
+      become: true
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ gitea_user }}"
+        group: "{{ gitea_group }}"
+        mode: 'u=rwx,g=rx,o='
+      with_items:
+        - "{{ gitea_backup_location }}"
+
+    - name: Backing up gitea before upgrade
+      become: true
+      ansible.builtin.command:
+        cmd: "sudo -u {{ gitea_user }} {{ gitea_executable_path }} dump -c {{ gitea_configuration_path }}/gitea.ini"
+        chdir: "{{ gitea_backup_location }}"
+      changed_when: true
+  rescue:
+    - name: Starting gitea because backup failed
+      become: true
+      ansible.builtin.systemd:
+        name: gitea
+        state: stopped
+      when: ansible_service_mgr == "systemd"
+
+    - name: Print updateing error
+      ansible.builtin.debug:
+        msg: "failed to backup gitea"

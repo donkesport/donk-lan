@@ -1,0 +1,37 @@
+- name: Copy job
+  ansible.builtin.copy:
+    host: nomad_servers
+    src: files/jobs_nomad/teeworlds.nomad
+    dest: /home/donkesport
+    owner: donkesport
+    group: donkesport
+    mode: '0644'
+    tags:
+      - copy_a_job
+
+- name: Create job
+  community.general.nomad_job:
+    host: nomad_servers
+    state: present
+    command: "nomad job run teeworlds.nomad"
+    timeout: 120
+    tags:
+      - start_a_job
+
+- name: Stop job
+  community.general.nomad_job:
+    host: nomad_servers
+    state: absent
+    name: teeworlds
+  tags:
+    - stop_a_job
+
+- name: Force job to start
+  community.general.nomad_job:
+    host: nomad_servers
+    state: present
+    name: teeworlds
+    timeout: 120
+    force_start: true
+  tags:
+    - force_start_a_job

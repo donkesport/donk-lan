@@ -1,0 +1,2 @@
+promtail_version: 2.7.0
+loki_server: localhost

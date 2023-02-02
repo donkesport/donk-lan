@@ -1,0 +1,74 @@
+---
+# written by nicoco
+- hosts: registry
+  become: yes
+  roles:
+    - docker
+
+- name: "prerequisite close the dns port"
+  hosts : registry 
+  become: yes
+  tasks:
+    - name : "overide dns server"
+      ansible.builtin.lineinfile:
+        path: /etc/systemd/resolved.conf
+        regexp: '^\#DNS='
+        line: 'DNS={{ dns_upstream }}'
+        state: present
+    - name: "close port"
+      ansible.builtin.lineinfile:
+        path: /etc/systemd/resolved.conf
+        regexp: '^#DNSStubListener=yes$'
+        line: 'DNSStubListener=no'
+        state: present
+    - name: "restart systemd-resolved"
+      ansible.builtin.service:
+        name: systemd-resolved
+        state: restarted
+    
+
+- name: "Adding custom DNS record"
+  hosts : registry
+  become: yes
+  tasks:
+    - name: send files
+      ansible.builtin.copy:
+        src: "../res/infra_conf_files/dnsmasq"
+        dest: /home/donkesport/
+        owner: donkesport
+        group: donkesport
+        mode: '0644'
+      tags:
+      - copy-files
+
+
+- name: "deploy dockers"
+  hosts: registry
+  become: yes
+  tasks:
+    - name: "install pip : not needed if packer is redone"
+      ansible.builtin.package:
+        name: python3-pip
+        state: present
+    - name: "install docker for python"
+      ansible.builtin.pip: 
+        name: docker
+    - name: "pull docker image : andyshinn/dnsmasq"
+      community.docker.docker_image:
+        name: "andyshinn/dnsmasq"
+        source: pull
+    - name: "start container : registry server"
+      community.docker.docker_container:
+        name: dnsmasq
+        image: "andyshinn/dnsmasq"
+        ports:
+          - "53:53/udp"
+        volumes:
+          - "/home/donkesport/dnsmasq/dnsmasq.conf:/etc/dnsmasq.conf"
+          - "/home/donkesport/dnsmasq/dnsmasq-dns.conf:/etc/dnsmasq-dns.conf"
+          - "/home/donkesport/dnsmasq/dnsmasq-hosts.conf:/etc/dnsmasq-hosts.conf"
+        restart: true
+        detach: true
+
+
+...

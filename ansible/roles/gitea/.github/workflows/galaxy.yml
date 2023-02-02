@@ -1,0 +1,22 @@
+---
+name: Galaxy release
+
+# yamllint disable-line rule:truthy
+on:
+  push:
+    branches: ['main']
+  release:
+    types: ['created']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'checkout git repo'
+        uses: actions/checkout@v3
+
+      - name: 'release on galaxy'
+        uses: robertdebock/galaxy-action@1.2.0
+        with:
+          galaxy_api_key: ${{ secrets.galaxy_api_key }}
+          git_branch: 'main'

@@ -1,0 +1,67 @@
+---
+
+- name: Configure 10_DONK_interco interface
+  pfsensible.core.pfsense_interface:
+    descr: 10_DONK_interco
+    interface: vtnet0
+    ipv4_type: dhcp
+    blockpriv: false
+    blockbogons: false
+    enable: True
+  
+- name: Configure 11_SRV_Monitoring interface
+  pfsensible.core.pfsense_interface:
+    descr: 11_SRV_Monitoring
+    interface: vtnet1
+    ipv4_type: static
+    ipv4_address: "{{ fw_monitoring_address }}"
+    ipv4_prefixlen: 24
+    enable: True
+
+- name: Configure 12_SRV_Automatisation interface
+  pfsensible.core.pfsense_interface:
+    descr: 12_SRV_Automatisation
+    interface: vtnet2
+    ipv4_type: static
+    ipv4_address: "{{ fw_automatisation_address }}"
+    ipv4_prefixlen: 24
+    enable: True
+
+- name: Configure 13_SRV_Infra interface
+  pfsensible.core.pfsense_interface:
+    descr: 13_SRV_Infra
+    interface: vtnet3
+    ipv4_type: static
+    ipv4_address: "{{ fw_infra_address }}"
+    ipv4_prefixlen: 24
+    enable: True
+
+
+- name: Configure 14_SRV_Games interface
+  pfsensible.core.pfsense_interface:
+    descr: 14_SRV_Games
+    interface: vtnet4
+    ipv4_type: static
+    ipv4_address: "{{ fw_games_address }}"
+    ipv4_prefixlen: 24
+    enable: True
+
+- name: Configure 31_STA_ADMIN interface
+  pfsensible.core.pfsense_interface:
+    descr: 31_STA_ADMIN
+    interface: vtnet5
+    ipv4_type: static
+    ipv4_address: "{{ fw_admin_address }}"
+    ipv4_prefixlen: 24
+    enable: True
+
+- name: Configure 32_STA_Joueurs interface
+  pfsensible.core.pfsense_interface:
+    descr: 32_STA_Joueurs
+    interface: vtnet6
+    ipv4_type: static
+    ipv4_address: "{{ fw_joueurs_address }}"
+    ipv4_prefixlen: 24
+    enable: True
+
+  

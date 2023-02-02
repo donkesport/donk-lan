@@ -1,0 +1,6 @@
+---
+collections:
+# With just the collection name
+#- community.general
+#- community.grafana
+- pfsensible.core

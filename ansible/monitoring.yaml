@@ -1,0 +1,91 @@
+---
+#Written by karakara104
+- name: bootstrap monitoring server
+  hosts: monitoring
+  become: True
+  vars:
+    loki_server: "{{ hostvars['monitoring'].ansible_host }}"
+  roles:
+    - prometheus
+    - loki
+    - prometheus_node_exporter
+    - promtail
+    - grafana
+  tags:
+    - install-monitoring-stack
+
+- name: copy files
+  hosts: monitoring
+  become: True
+  tasks:
+    - name: send files to vm
+      ansible.builtin.copy:
+        src: "../res/sysfiles/00-promtail-relay.conf"
+        dest: /etc/rsyslog.d/
+        owner: root
+        group: root
+        mode: '0644'
+      tags:
+      - copy-sysfiles
+
+- hosts: vm_linux
+  become: yes
+  vars:
+    loki_server: "{{ hostvars['monitoring'].ansible_host }}"
+  roles:
+    - prometheus_node_exporter # install prometheus node exporter
+    - promtail
+  tags:
+    - install-prometheus-agents-promtail
+
+- name: reload loki service
+  hosts: monitoring
+  become: True
+  tasks:
+    - name: restart loki
+      service:
+        name: loki
+        enabled: true
+        state: restarted
+      become: true
+  tags:
+    - post-install-server
+
+- name: reload promtail service
+  hosts: vm_linux
+  become: True
+  tasks:
+    - name: restart promtail
+      service:
+        name: promtail
+        enabled: true
+        state: restarted
+      become: true
+  tags:
+    - post-install-agent
+
+- name: reload rsyslog service
+  hosts: monitoring
+  become: True
+  tasks:
+    - name: restart rsyslog
+      service:
+        name: rsyslog
+        enabled: true
+        state: restarted
+      become: true
+  tags:
+    - post-install-server
+
+- name: reload prometheus service
+  hosts: monitoring
+  become: True
+  tasks:
+    - name: restart prometheus
+      service:
+        name: prometheus
+        enabled: true
+        state: restarted
+      become: true
+  tags:
+    - post-install-server

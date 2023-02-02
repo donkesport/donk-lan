@@ -1,0 +1,13 @@
+consul-server-1.donk.lan    A   10.50.12.1
+nomad-server-1.donk.lan A   10.50.12.11
+nomad-monitor-node1.donk.lan    A   10.50.11.1
+nomad-infra-node1.donk.lan  A   10.50.13.1
+nomad-games-node1.donk.lan  A   10.50.14.1
+
+forti.donk.lan  A   10.50.31.254
+aruba1.donk.lan A   10.50.32.200
+aruba2.donk.lan A   10.50.32.201
+traefik.donk.lan    A   10.50.14.1
+
+games.donk.lan  A 10.50.14.1
+www.donk.lan    A 10.50.14.1
